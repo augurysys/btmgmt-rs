@@ -1,4 +1,5 @@
 extern crate libc;
+extern crate hex;
 
 mod cmd;
 mod error;

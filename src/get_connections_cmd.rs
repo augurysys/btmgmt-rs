@@ -1,5 +1,6 @@
 use cmd::Command;
 use error::Error;
+use hex;
 
 const GET_CONNECTIONS_OPCODE: u16 = 0x0015;
 
@@ -23,6 +24,34 @@ pub enum AddressType {
 pub struct Address {
     pub address: [u8; 6],
     pub address_type: AddressType,
+}
+
+impl Address {
+    pub fn to_string(&self) -> String {
+        let mut a0: [u8; 1] = Default::default();
+        let mut a1: [u8; 1] = Default::default();
+        let mut a2: [u8; 1] = Default::default();
+        let mut a3: [u8; 1] = Default::default();
+        let mut a4: [u8; 1] = Default::default();
+        let mut a5: [u8; 1] = Default::default();
+
+        a0.copy_from_slice(&self.address[5..6]);
+        a1.copy_from_slice(&self.address[4..5]);
+        a2.copy_from_slice(&self.address[3..4]);
+        a3.copy_from_slice(&self.address[2..3]);
+        a4.copy_from_slice(&self.address[1..2]);
+        a5.copy_from_slice(&self.address[0..1]);
+
+        format!(
+            "{}:{}:{}:{}:{}:{}",
+            hex::encode_upper(a0),
+            hex::encode_upper(a1),
+            hex::encode_upper(a2),
+            hex::encode_upper(a3),
+            hex::encode_upper(a4),
+            hex::encode_upper(a5)
+        )
+    }
 }
 
 impl GetConnectionsCommand {

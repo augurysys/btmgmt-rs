@@ -5,3 +5,4 @@ authors = ["Gal Ben-Haim <gbenhaim@augury.com>"]
 
 [dependencies]
 libc = "0.2.43"
+hex = "0.3.2"
