@@ -1,0 +1,7 @@
+[package]
+name = "btmgmt"
+version = "0.1.0"
+authors = ["Gal Ben-Haim <gbenhaim@augury.com>"]
+
+[dependencies]
+libc = "0.2.43"
