@@ -3,6 +3,7 @@ pub trait Command {
     fn get_ctrl_index(&self) -> u16;
     fn get_param_length(&self) -> u16;
     fn get_params(&self) -> Vec<u8>;
+    fn is_response(&self, &[u8]) -> bool;
     fn store_response(&mut self, Vec<u8>);
 
     fn to_bytes(&self) -> Vec<u8> {

@@ -1,12 +1,15 @@
-extern crate libc;
 extern crate hex;
+extern crate libc;
 
+pub mod address;
 mod cmd;
 mod error;
+mod get_connection_info_cmd;
 mod get_connections_cmd;
 
 use cmd::Command;
 use error::Error;
+use get_connection_info_cmd::GetConnectionInfoCommand;
 use get_connections_cmd::GetConnectionsCommand;
 
 const COMMAND_RESPONSE_EVENT: u8 = 0x01;
@@ -63,8 +66,19 @@ impl BTMgmt {
         Ok(btmgmt)
     }
 
-    pub fn get_connections(&self) -> Result<Vec<get_connections_cmd::Address>, Error> {
-        let mut cmd = GetConnectionsCommand::new(0);
+    pub fn get_connections(&self, ctrl_index: u16) -> Result<Vec<address::Address>, Error> {
+        let mut cmd = GetConnectionsCommand::new(ctrl_index);
+        self.write_command(&mut cmd);
+
+        cmd.result()
+    }
+
+    pub fn get_connection_info(
+        &self,
+        ctrl_index: u16,
+        address: &address::Address,
+    ) -> Result<get_connection_info_cmd::ConnectionInfo, Error> {
+        let mut cmd = GetConnectionInfoCommand::new(ctrl_index, &address);
         self.write_command(&mut cmd);
 
         cmd.result()
@@ -99,8 +113,7 @@ impl BTMgmt {
                     }
 
                     if (buffer[0] == COMMAND_RESPONSE_EVENT || buffer[0] == COMMAND_STATUS_EVENT)
-                        && (u16::from(buffer[6]) | (u16::from(buffer[7]) << 8)
-                            == cmd.get_cmd_code())
+                        && cmd.is_response(&buffer[0..buffer.len()])
                     {
                         let mut v = Vec::new();
                         v.extend_from_slice(&buffer);
