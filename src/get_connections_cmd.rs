@@ -1,6 +1,7 @@
 use address::{Address, AddressType};
 use cmd::Command;
 use error::Error;
+use std::time;
 
 const GET_CONNECTIONS_OPCODE: u16 = 0x0015;
 
@@ -10,16 +11,18 @@ pub struct GetConnectionsCommand {
     param_length: u16,
     params: Vec<u8>,
     response: Vec<u8>,
+    timeout: time::Duration,
 }
 
 impl GetConnectionsCommand {
-    pub fn new(ctrl_index: u16) -> GetConnectionsCommand {
+    pub fn new(ctrl_index: u16, to: time::Duration) -> GetConnectionsCommand {
         GetConnectionsCommand {
             cmd_code: GET_CONNECTIONS_OPCODE,
             ctrl_index,
             param_length: 0,
             params: Vec::new(),
             response: Vec::new(),
+            timeout: to,
         }
     }
 }
@@ -67,6 +70,9 @@ impl Command for GetConnectionsCommand {
     }
     fn get_params(&self) -> Vec<u8> {
         self.params.clone()
+    }
+    fn get_timeout(&self) -> time::Duration {
+        self.timeout.clone()
     }
     fn store_response(&mut self, data: Vec<u8>) {
         self.response = data;
