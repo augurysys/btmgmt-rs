@@ -17,7 +17,11 @@ pub struct GetConnectionInfoCommand {
 }
 
 impl GetConnectionInfoCommand {
-    pub fn new(ctrl_index: u16, address: &Address, to: time::Duration) -> GetConnectionInfoCommand {
+    pub fn new(
+        ctrl_index: u16,
+        address: &Address,
+        timeout: time::Duration,
+    ) -> GetConnectionInfoCommand {
         let mut c = GetConnectionInfoCommand {
             cmd_code: GET_CONNECTION_INFO_OPCODE,
             ctrl_index,
@@ -25,7 +29,7 @@ impl GetConnectionInfoCommand {
             params: Vec::new(),
             address: address.clone(),
             response: Vec::new(),
-            timeout: to,
+            timeout,
         };
 
         c.params.extend_from_slice(&address.address);

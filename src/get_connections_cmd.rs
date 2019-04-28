@@ -15,14 +15,14 @@ pub struct GetConnectionsCommand {
 }
 
 impl GetConnectionsCommand {
-    pub fn new(ctrl_index: u16, to: time::Duration) -> GetConnectionsCommand {
+    pub fn new(ctrl_index: u16, timeout: time::Duration) -> GetConnectionsCommand {
         GetConnectionsCommand {
             cmd_code: GET_CONNECTIONS_OPCODE,
             ctrl_index,
             param_length: 0,
             params: Vec::new(),
             response: Vec::new(),
-            timeout: to,
+            timeout,
         }
     }
 }

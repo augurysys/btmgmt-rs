@@ -79,7 +79,8 @@ impl BTMgmt {
         ctrl_index: u16,
         address: &address::Address,
     ) -> Result<get_connection_info_cmd::ConnectionInfo, Error> {
-        let mut cmd = GetConnectionInfoCommand::new(ctrl_index, &address, time::Duration::from_secs(1));
+        let mut cmd =
+            GetConnectionInfoCommand::new(ctrl_index, &address, time::Duration::from_secs(1));
         self.write_command(&mut cmd)?;
 
         cmd.result()
@@ -100,8 +101,7 @@ impl BTMgmt {
             )
         };
 
-        // store current timestamp
-        let now = time::SystemTime::now();
+        let start = time::SystemTime::now();
         loop {
             let r = unsafe { libc::poll(fds.as_mut_ptr(), fds.len() as libc::c_ulong, 1) };
             if r > 0 && fds[0].revents > 0 {
@@ -121,26 +121,25 @@ impl BTMgmt {
                         let mut v = Vec::new();
                         v.extend_from_slice(&buffer);
                         cmd.store_response(v);
-                        return Ok(())
+                        return Ok(());
                     }
                 } else {
                     return Err(error::Error::UnknownError);
                 }
             }
 
-            // check comamnd timeout
-            match now.elapsed() {
-                Ok(elapsed) => { 
+            // check command timeout
+            match start.elapsed() {
+                Ok(elapsed) => {
                     if elapsed > cmd.get_timeout() {
                         return Err(error::Error::Timeout);
                     }
-                },
+                }
 
-                Err(_) => { 
-                    return Err(error::Error::UnknownError); 
-                },
+                Err(_) => {
+                    return Err(error::Error::UnknownError);
+                }
             }
-
         }
     }
 }
