@@ -128,7 +128,7 @@ impl BTMgmt {
                 }
             }
 
-            // check current timestamp - start timestamp > cmd.get_timeout() -> Err(error:Timeout)
+            // check comamnd timeout
             match now.elapsed() {
                 Ok(elapsed) => { 
                     if elapsed > cmd.get_timeout() {
@@ -136,7 +136,9 @@ impl BTMgmt {
                     }
                 },
 
-                Err(_) => { return Err(error::Error::UnknownError); },
+                Err(_) => { 
+                    return Err(error::Error::UnknownError); 
+                },
             }
 
         }

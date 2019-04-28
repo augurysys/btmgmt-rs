@@ -72,7 +72,7 @@ impl Command for GetConnectionsCommand {
         self.params.clone()
     }
     fn get_timeout(&self) -> time::Duration {
-        self.timeout.clone()
+        self.timeout
     }
     fn store_response(&mut self, data: Vec<u8>) {
         self.response = data;
