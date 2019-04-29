@@ -11,7 +11,8 @@ fn main() {
     let address = btmgmt::address::Address::from_string(
         args[1].as_str(),
         btmgmt::address::AddressType::LeRandom,
-    ).unwrap();
+    )
+    .unwrap();
     let ci = btmgmt.get_connection_info(0, &address).unwrap();
     println!("{:?}", ci);
 }

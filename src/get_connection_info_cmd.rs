@@ -2,6 +2,8 @@ use address::{Address, AddressType};
 use cmd::Command;
 use error::Error;
 
+use std::time;
+
 const GET_CONNECTION_INFO_OPCODE: u16 = 0x0031;
 
 pub struct GetConnectionInfoCommand {
@@ -11,10 +13,15 @@ pub struct GetConnectionInfoCommand {
     params: Vec<u8>,
     address: Address,
     response: Vec<u8>,
+    timeout: time::Duration,
 }
 
 impl GetConnectionInfoCommand {
-    pub fn new(ctrl_index: u16, address: &Address) -> GetConnectionInfoCommand {
+    pub fn new(
+        ctrl_index: u16,
+        address: &Address,
+        timeout: time::Duration,
+    ) -> GetConnectionInfoCommand {
         let mut c = GetConnectionInfoCommand {
             cmd_code: GET_CONNECTION_INFO_OPCODE,
             ctrl_index,
@@ -22,6 +29,7 @@ impl GetConnectionInfoCommand {
             params: Vec::new(),
             address: address.clone(),
             response: Vec::new(),
+            timeout,
         };
 
         c.params.extend_from_slice(&address.address);
@@ -83,6 +91,9 @@ impl Command for GetConnectionInfoCommand {
     }
     fn get_params(&self) -> Vec<u8> {
         self.params.clone()
+    }
+    fn get_timeout(&self) -> time::Duration {
+        self.timeout
     }
     fn store_response(&mut self, data: Vec<u8>) {
         self.response = data;

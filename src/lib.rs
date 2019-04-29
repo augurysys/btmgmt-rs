@@ -11,6 +11,7 @@ use cmd::Command;
 use error::Error;
 use get_connection_info_cmd::GetConnectionInfoCommand;
 use get_connections_cmd::GetConnectionsCommand;
+use std::time;
 
 const COMMAND_RESPONSE_EVENT: u8 = 0x01;
 const COMMAND_STATUS_EVENT: u8 = 0x02;
@@ -67,8 +68,8 @@ impl BTMgmt {
     }
 
     pub fn get_connections(&self, ctrl_index: u16) -> Result<Vec<address::Address>, Error> {
-        let mut cmd = GetConnectionsCommand::new(ctrl_index);
-        self.write_command(&mut cmd);
+        let mut cmd = GetConnectionsCommand::new(ctrl_index, time::Duration::from_secs(1));
+        self.write_command(&mut cmd)?;
 
         cmd.result()
     }
@@ -78,13 +79,14 @@ impl BTMgmt {
         ctrl_index: u16,
         address: &address::Address,
     ) -> Result<get_connection_info_cmd::ConnectionInfo, Error> {
-        let mut cmd = GetConnectionInfoCommand::new(ctrl_index, &address);
-        self.write_command(&mut cmd);
+        let mut cmd =
+            GetConnectionInfoCommand::new(ctrl_index, &address, time::Duration::from_secs(1));
+        self.write_command(&mut cmd)?;
 
         cmd.result()
     }
 
-    fn write_command(&self, cmd: &mut Command) {
+    fn write_command(&self, cmd: &mut Command) -> Result<(), Error> {
         let mut fds = vec![libc::pollfd {
             fd: self.fd,
             events: libc::POLLIN | libc::POLLHUP | libc::POLLERR,
@@ -99,6 +101,7 @@ impl BTMgmt {
             )
         };
 
+        let start = time::SystemTime::now();
         loop {
             let r = unsafe { libc::poll(fds.as_mut_ptr(), fds.len() as libc::c_ulong, 1) };
             if r > 0 && fds[0].revents > 0 {
@@ -109,7 +112,7 @@ impl BTMgmt {
                     };
 
                     if bytes <= 0 {
-                        return;
+                        return Err(error::Error::UnknownError);
                     }
 
                     if (buffer[0] == COMMAND_RESPONSE_EVENT || buffer[0] == COMMAND_STATUS_EVENT)
@@ -118,10 +121,23 @@ impl BTMgmt {
                         let mut v = Vec::new();
                         v.extend_from_slice(&buffer);
                         cmd.store_response(v);
-                        break;
+                        return Ok(());
                     }
                 } else {
-                    return;
+                    return Err(error::Error::UnknownError);
+                }
+            }
+
+            // check command timeout
+            match start.elapsed() {
+                Ok(elapsed) => {
+                    if elapsed > cmd.get_timeout() {
+                        return Err(error::Error::Timeout);
+                    }
+                }
+
+                Err(_) => {
+                    return Err(error::Error::UnknownError);
                 }
             }
         }
