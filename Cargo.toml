@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Gal Ben-Haim <gbenhaim@augury.com>"]
 
 [dependencies]
-libc = "0.2.43"
-hex = "0.3.2"
+libc = "= 0.2.60"
+hex = "= 0.3.2"
