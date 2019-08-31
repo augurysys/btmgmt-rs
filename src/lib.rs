@@ -103,7 +103,7 @@ impl BTMgmt {
                 cmd_ptr as *mut libc::c_void,
                 cmd.size(),
             );
-            let x = Box::from_raw(cmd_ptr);
+            Box::from_raw(cmd_ptr)
         };
 
         let start = time::SystemTime::now();
