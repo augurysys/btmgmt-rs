@@ -54,11 +54,14 @@ impl BTMgmt {
         };
 
         if unsafe {
-            libc::bind(
+            let addr_ptr = Box::into_raw(Box::new(addr));
+            let ret_val = libc::bind(
                 btmgmt.fd,
-                Box::into_raw(Box::new(addr)) as *const libc::sockaddr,
+                addr_ptr as *const libc::sockaddr,
                 std::mem::size_of::<SockAddrHci>() as u32,
-            )
+            );
+            Box::from_raw(addr_ptr);
+            ret_val
         } < 0
         {
             return Err(Error::BindError);
@@ -94,11 +97,13 @@ impl BTMgmt {
         }];
 
         unsafe {
+            let cmd_ptr = Box::into_raw(cmd.to_bytes().into_boxed_slice());
             libc::write(
                 self.fd,
-                Box::into_raw(cmd.to_bytes().into_boxed_slice()) as *mut libc::c_void,
+                cmd_ptr as *mut libc::c_void,
                 cmd.size(),
-            )
+            );
+            let x = Box::from_raw(cmd_ptr);
         };
 
         let start = time::SystemTime::now();
