@@ -223,7 +223,7 @@ impl BTMgmtEventListener {
     }
 
 
-    fn run(&mut self, /*filter,*/ event_tx: mpsc::SyncSender<Box<[u8]>>) /*-> ()*/ {
+    fn run(&mut self, /*filter,*/ event_tx: mpsc::SyncSender<Box<[u8]>>) {
         let mut fds = vec![libc::pollfd {
             fd: self.fd,
             events: libc::POLLIN | libc::POLLHUP | libc::POLLERR,
