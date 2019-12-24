@@ -218,7 +218,6 @@ impl BTMgmtEventListener {
         }
 
         btmgmteventlistener.run(event_tx);
-
         Ok(btmgmteventlistener)
     }
 
@@ -239,15 +238,15 @@ impl BTMgmtEventListener {
                 let r = unsafe { libc::poll(fds.as_mut_ptr(), fds.len() as libc::c_ulong, 1) };
                 if r > 0 && fds[0].revents > 0 {
                     if fds[0].revents & libc::POLLIN > 0 {
-                        let mut buffer: [u8; 1024] = [0; 1024];
+                        let mut buffer: [u8; 128] = [0; 128];
                         let bytes = unsafe {
-                            libc::read(/*self.*/fd, buffer.as_mut_ptr() as *mut libc::c_void, 1024)
+                            libc::read(fd, buffer.as_mut_ptr() as *mut libc::c_void, 128)
                         };
                         if bytes > 0 {      
-                            if buffer[0] == EVENT_DEVICE_DISCONNECTED || buffer[0] == EVENT_DEVICE_CONNECTED
+                            if buffer[0] == EVENT_DEVICE_DISCONNECTED/* || buffer[0] == EVENT_DEVICE_CONNECTED*/
                             {
-                                let xs: [u8; 1] = [buffer[0]];
-                                let event_data = Box::new(xs);
+                                let event_data = Box::new(buffer);
+
                                 match event_tx.send(event_data) {
                                     Ok(()) => {}
                                     Err(_err) => return,                                    
