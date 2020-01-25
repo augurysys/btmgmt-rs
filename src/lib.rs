@@ -7,12 +7,14 @@ mod error;
 mod get_connection_info_cmd;
 mod get_connections_cmd;
 mod add_device_cmd;
+mod unpair_device_cmd;
 
 use cmd::Command;
 use error::Error;
 use get_connection_info_cmd::GetConnectionInfoCommand;
 use get_connections_cmd::GetConnectionsCommand;
 use add_device_cmd::AddDeviceCommand;
+use unpair_device_cmd::UnpairDeviceCommand;
 use std::time;
 use std::sync::mpsc;
 
@@ -119,6 +121,18 @@ impl BTMgmt {
     ) -> Result<address::Address, Error> {
         let mut cmd =
             AddDeviceCommand::new(ctrl_index, &address, time::Duration::from_secs(1));
+        self.write_command(&mut cmd)?;
+
+        cmd.result()
+    }
+
+    pub fn unpair_device(
+        &self,
+        ctrl_index: u16,
+        address: &address::Address,
+    ) -> Result<address::Address, Error> {
+        let mut cmd =
+            UnpairDeviceCommand::new(ctrl_index, &address, time::Duration::from_secs(1));
         self.write_command(&mut cmd)?;
 
         cmd.result()
