@@ -144,10 +144,9 @@ impl BTMgmt {
 
     pub fn get_supported_cmds(
         &self,
-        ctrl_index: u16,
     ) -> Result<SupportedCmdsResult, Error> {
         let mut cmd =
-            GetSupportedCmdsCommand::new(ctrl_index, time::Duration::from_secs(1));
+            GetSupportedCmdsCommand::new(time::Duration::from_secs(1));
         self.write_command(&mut cmd)?;
 
         cmd.result()

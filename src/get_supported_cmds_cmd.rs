@@ -44,10 +44,10 @@ pub struct GetSupportedCmdsCommand {
 }
 
 impl GetSupportedCmdsCommand {
-    pub fn new(ctrl_index: u16, timeout: time::Duration) -> GetSupportedCmdsCommand {
+    pub fn new(timeout: time::Duration) -> GetSupportedCmdsCommand {
         GetSupportedCmdsCommand {
             cmd_code: GET_SUPPORTED_CMDS_CMD_OPCODE,
-            ctrl_index,
+            ctrl_index: 0xFFFF,
             param_length: 0,
             params: Vec::new(),
             response: Vec::new(),
