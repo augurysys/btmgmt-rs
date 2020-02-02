@@ -5,8 +5,8 @@ use std::time;
 const GET_SUPPORTED_CMDS_CMD_OPCODE: u16 = 0x0002;
 
 pub struct SupportedCmdsResult {
-    pub cmds: Vec<u16>,
-    pub events: Vec<u16>,
+    cmds: Vec<u16>,
+    events: Vec<u16>,
 }
 
 impl SupportedCmdsResult {
@@ -15,6 +15,22 @@ impl SupportedCmdsResult {
             cmds: Vec::new(),
             events: Vec::new(),
         }
+    }
+
+    pub fn add_cmd(&mut self, cmd: u16) {
+        self.cmds.push(cmd);
+    }
+
+    pub fn add_event(&mut self, cmd: u16) {
+        self.events.push(cmd);
+    }
+
+    pub fn is_cmd_supported(&self, cmd: u16) -> bool {
+        self.cmds.contains(&cmd)
+    }
+
+    pub fn is_event_supported(&self, event: u16) -> bool {
+        self.events.contains(&event)
     }
 }
 
