@@ -4,7 +4,7 @@ use error::Error;
 
 use std::time;
 
-const ADD_DEVICE_OPCODE: u16 = 0x0033;
+pub const ADD_DEVICE_OPCODE: u16 = 0x0033;
 
 pub struct AddDeviceCommand {
     cmd_code: u16,

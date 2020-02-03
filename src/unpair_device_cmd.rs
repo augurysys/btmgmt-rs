@@ -4,7 +4,7 @@ use error::Error;
 
 use std::time;
 
-const UNPAIR_DEVICE_OPCODE: u16 = 0x001B;
+pub const UNPAIR_DEVICE_OPCODE: u16 = 0x001B;
 
 pub struct UnpairDeviceCommand {
     cmd_code: u16,

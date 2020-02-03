@@ -2,7 +2,7 @@ use cmd::Command;
 use error::Error;
 use std::time;
 
-const GET_SUPPORTED_CMDS_CMD_OPCODE: u16 = 0x0002;
+pub const GET_SUPPORTED_CMDS_CMD_OPCODE: u16 = 0x0002;
 
 pub struct SupportedCmdsResult {
     cmds: Vec<u16>,

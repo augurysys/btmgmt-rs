@@ -3,7 +3,7 @@ use error::Error;
 
 use std::time;
 
-const SET_SCAN_PARAMS_OPCODE: u16 = 0x002C;
+pub const SET_SCAN_PARAMS_OPCODE: u16 = 0x002C;
 
 pub struct SetScanParamsCommand {
     cmd_code: u16,

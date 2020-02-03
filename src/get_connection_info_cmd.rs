@@ -4,7 +4,7 @@ use error::Error;
 
 use std::time;
 
-const GET_CONNECTION_INFO_OPCODE: u16 = 0x0031;
+pub const GET_CONNECTION_INFO_OPCODE: u16 = 0x0031;
 
 pub struct GetConnectionInfoCommand {
     cmd_code: u16,
