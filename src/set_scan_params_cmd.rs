@@ -16,7 +16,7 @@ pub struct SetScanParamsCommand {
 
 impl SetScanParamsCommand {
     pub fn new(
-        ctrl_index: u16,        
+        ctrl_index: u16,
         interval: u16,
         window: u16,
         timeout: time::Duration,
@@ -84,4 +84,3 @@ impl Command for SetScanParamsCommand {
         true
     }
 }
-

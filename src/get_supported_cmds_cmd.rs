@@ -72,11 +72,13 @@ impl GetSupportedCmdsCommand {
 
         let mut res = SupportedCmdsResult::new();
         for i in 0..num_cmds {
-            let cmd: u16 = u16::from(parameters[i as usize * 2]) | (u16::from(parameters[i as usize * 2 + 1]) << 8);
+            let cmd: u16 = u16::from(parameters[i as usize * 2])
+                | (u16::from(parameters[i as usize * 2 + 1]) << 8);
             res.cmds.push(cmd)
         }
-        for i in num_cmds..num_cmds+num_events {
-            let event: u16 = u16::from(parameters[i as usize * 2]) | (u16::from(parameters[i as usize * 2 + 1]) << 8);
+        for i in num_cmds..num_cmds + num_events {
+            let event: u16 = u16::from(parameters[i as usize * 2])
+                | (u16::from(parameters[i as usize * 2 + 1]) << 8);
             res.events.push(event)
         }
 

@@ -4,9 +4,9 @@ use error::Error;
 
 use std::time;
 
-pub const UNPAIR_DEVICE_OPCODE: u16 = 0x001B;
+pub const REMOVE_DEVICE_OPCODE: u16 = 0x0034;
 
-pub struct UnpairDeviceCommand {
+pub struct RemoveDeviceCommand {
     cmd_code: u16,
     ctrl_index: u16,
     param_length: u16,
@@ -16,12 +16,12 @@ pub struct UnpairDeviceCommand {
     timeout: time::Duration,
 }
 
-impl UnpairDeviceCommand {
-    pub fn new(ctrl_index: u16, address: &Address, timeout: time::Duration) -> UnpairDeviceCommand {
-        let mut c = UnpairDeviceCommand {
-            cmd_code: UNPAIR_DEVICE_OPCODE,
+impl RemoveDeviceCommand {
+    pub fn new(ctrl_index: u16, address: &Address, timeout: time::Duration) -> RemoveDeviceCommand {
+        let mut c = RemoveDeviceCommand {
+            cmd_code: REMOVE_DEVICE_OPCODE,
             ctrl_index,
-            param_length: 8,
+            param_length: 7,
             params: Vec::new(),
             address: address.clone(),
             response: Vec::new(),
@@ -35,13 +35,12 @@ impl UnpairDeviceCommand {
             AddressType::LeRandom => 2,
             AddressType::Unknown => 0,
         });
-        c.params.push(1);
 
         c
     }
 }
 
-impl UnpairDeviceCommand {
+impl RemoveDeviceCommand {
     pub fn result(&self) -> Result<Address, Error> {
         if self.response.is_empty() {
             return Err(Error::NoResponse);
@@ -61,7 +60,7 @@ impl UnpairDeviceCommand {
     }
 }
 
-impl Command for UnpairDeviceCommand {
+impl Command for RemoveDeviceCommand {
     fn get_cmd_code(&self) -> u16 {
         self.cmd_code
     }

@@ -17,11 +17,7 @@ pub struct AddDeviceCommand {
 }
 
 impl AddDeviceCommand {
-    pub fn new(
-        ctrl_index: u16,
-        address: &Address,
-        timeout: time::Duration,
-    ) -> AddDeviceCommand {
+    pub fn new(ctrl_index: u16, address: &Address, timeout: time::Duration) -> AddDeviceCommand {
         let mut c = AddDeviceCommand {
             cmd_code: ADD_DEVICE_OPCODE,
             ctrl_index,
@@ -107,4 +103,3 @@ impl Command for AddDeviceCommand {
         true
     }
 }
-
