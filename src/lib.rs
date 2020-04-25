@@ -139,7 +139,7 @@ impl BTMgmt {
         cmd.result()
     }
 
-    pub fn remmove_device(
+    pub fn remove_device(
         &self,
         ctrl_index: u16,
         address: &address::Address,
