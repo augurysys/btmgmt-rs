@@ -3,7 +3,7 @@ use cmd::Command;
 use error::Error;
 use std::time;
 
-const GET_CONNECTIONS_OPCODE: u16 = 0x0015;
+pub const GET_CONNECTIONS_OPCODE: u16 = 0x0015;
 
 pub struct GetConnectionsCommand {
     cmd_code: u16,

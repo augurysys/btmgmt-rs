@@ -4,9 +4,9 @@ use error::Error;
 
 use std::time;
 
-pub const GET_CONNECTION_INFO_OPCODE: u16 = 0x0031;
+pub const REMOVE_DEVICE_OPCODE: u16 = 0x0034;
 
-pub struct GetConnectionInfoCommand {
+pub struct RemoveDeviceCommand {
     cmd_code: u16,
     ctrl_index: u16,
     param_length: u16,
@@ -16,14 +16,10 @@ pub struct GetConnectionInfoCommand {
     timeout: time::Duration,
 }
 
-impl GetConnectionInfoCommand {
-    pub fn new(
-        ctrl_index: u16,
-        address: &Address,
-        timeout: time::Duration,
-    ) -> GetConnectionInfoCommand {
-        let mut c = GetConnectionInfoCommand {
-            cmd_code: GET_CONNECTION_INFO_OPCODE,
+impl RemoveDeviceCommand {
+    pub fn new(ctrl_index: u16, address: &Address, timeout: time::Duration) -> RemoveDeviceCommand {
+        let mut c = RemoveDeviceCommand {
+            cmd_code: REMOVE_DEVICE_OPCODE,
             ctrl_index,
             param_length: 7,
             params: Vec::new(),
@@ -44,8 +40,8 @@ impl GetConnectionInfoCommand {
     }
 }
 
-impl GetConnectionInfoCommand {
-    pub fn result(&self) -> Result<ConnectionInfo, Error> {
+impl RemoveDeviceCommand {
+    pub fn result(&self) -> Result<Address, Error> {
         if self.response.is_empty() {
             return Err(Error::NoResponse);
         }
@@ -59,27 +55,12 @@ impl GetConnectionInfoCommand {
         let mut address: [u8; 6] = Default::default();
         address.copy_from_slice(&parameters[0..6]);
         let address_type = parameters[6];
-        let rssi = {
-            if parameters[7] & 0x80 == 0 {
-                parameters[7] as i8
-            } else {
-                !((parameters[7] as i8) - 0x01) * -1
-            }
-        };
 
-        let tx_power = parameters[8];
-        let max_tx_power = parameters[9];
-
-        Ok(ConnectionInfo {
-            address: Address::from_bytes(address, address_type),
-            rssi,
-            tx_power,
-            max_tx_power,
-        })
+        Ok(Address::from_bytes(address, address_type))
     }
 }
 
-impl Command for GetConnectionInfoCommand {
+impl Command for RemoveDeviceCommand {
     fn get_cmd_code(&self) -> u16 {
         self.cmd_code
     }
@@ -120,12 +101,4 @@ impl Command for GetConnectionInfoCommand {
 
         true
     }
-}
-
-#[derive(Debug)]
-pub struct ConnectionInfo {
-    pub address: Address,
-    pub rssi: i8,
-    pub tx_power: u8,
-    pub max_tx_power: u8,
 }

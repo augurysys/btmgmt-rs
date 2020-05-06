@@ -1,33 +1,51 @@
 extern crate hex;
 extern crate libc;
 
+mod add_device_cmd;
 pub mod address;
 mod cmd;
 mod error;
 mod get_connection_info_cmd;
 mod get_connections_cmd;
+mod get_supported_cmds_cmd;
+mod remove_device_cmd;
+mod set_scan_params_cmd;
+mod unpair_device_cmd;
 
+use add_device_cmd::AddDeviceCommand;
 use cmd::Command;
 use error::Error;
 use get_connection_info_cmd::GetConnectionInfoCommand;
 use get_connections_cmd::GetConnectionsCommand;
-use std::time;
+use get_supported_cmds_cmd::{GetSupportedCmdsCommand, SupportedCmdsResult};
+use remove_device_cmd::RemoveDeviceCommand;
+use set_scan_params_cmd::SetScanParamsCommand;
 use std::sync::mpsc;
+use std::time;
+use unpair_device_cmd::UnpairDeviceCommand;
 
+use std::mem;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::mem;
+
+use add_device_cmd::ADD_DEVICE_OPCODE;
+use remove_device_cmd::REMOVE_DEVICE_OPCODE;
+use set_scan_params_cmd::SET_SCAN_PARAMS_OPCODE;
 
 const COMMAND_RESPONSE_EVENT: u8 = 0x01;
 const COMMAND_STATUS_EVENT: u8 = 0x02;
 
-pub const BTMGMT_EVENT_CODE_DEVICE_CONNECTED: u16       = 0x000b;
-pub const BTMGMT_EVENT_CODE_DEVICE_DISCONNECTED: u16    = 0x000c;
-pub const BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_UNSPECIFIED: u8          = 0x00;
-pub const BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_CONNECTION_TIMEOUT: u8   = 0x01;
-pub const BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_TERMINATE_LOCAL: u8      = 0x02;
-pub const BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_TERMINATE_REMOTE: u8     = 0x03;
-pub const BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_AUTH_FAILURE: u8         = 0x04;
+pub const BTMGMT_EVENT_CODE_DEVICE_CONNECTED: u16 = 0x000b;
+pub const BTMGMT_EVENT_CODE_DEVICE_DISCONNECTED: u16 = 0x000c;
+pub const BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_UNSPECIFIED: u8 = 0x00;
+pub const BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_CONNECTION_TIMEOUT: u8 = 0x01;
+pub const BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_TERMINATE_LOCAL: u8 = 0x02;
+pub const BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_TERMINATE_REMOTE: u8 = 0x03;
+pub const BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_AUTH_FAILURE: u8 = 0x04;
+
+pub const BTMGMT_CMD_OPCODE_ADD_DEVICE: u16 = ADD_DEVICE_OPCODE;
+pub const BTMGMT_CMD_OPCODE_REMOVE_DEVICE: u16 = REMOVE_DEVICE_OPCODE;
+pub const BTMGMT_CMD_OPCODE_SET_SCAN_PARAMS: u16 = SET_SCAN_PARAMS_OPCODE;
 
 const BTPROTO_HCI: i32 = 1;
 const HCI_DEV_NONE: u16 = 0xffff;
@@ -41,11 +59,11 @@ struct SockAddrHci {
 }
 
 pub struct BtmgmtEventPacketStructure {
-    pub event_code: u16,                    //byte loc 00-01
-    pub controller_index: u16,              //byte loc 02-03
-    pub param_lenght: u16,                  //byte loc 04-05
-    pub device_address: address::Address,   //byte loc 06-11 + 12
-    pub disconnect_reason: u8,              //byte loc 13
+    pub event_code: u16,                  //byte loc 00-01
+    pub controller_index: u16,            //byte loc 02-03
+    pub param_lenght: u16,                //byte loc 04-05
+    pub device_address: address::Address, //byte loc 06-11 + 12
+    pub disconnect_reason: u8,            //byte loc 13
 }
 
 pub struct BTMgmt {
@@ -110,6 +128,59 @@ impl BTMgmt {
         cmd.result()
     }
 
+    pub fn add_device(
+        &self,
+        ctrl_index: u16,
+        address: &address::Address,
+    ) -> Result<address::Address, Error> {
+        let mut cmd = AddDeviceCommand::new(ctrl_index, &address, time::Duration::from_secs(1));
+        self.write_command(&mut cmd)?;
+
+        cmd.result()
+    }
+
+    pub fn remove_device(
+        &self,
+        ctrl_index: u16,
+        address: &address::Address,
+    ) -> Result<address::Address, Error> {
+        let mut cmd = RemoveDeviceCommand::new(ctrl_index, &address, time::Duration::from_secs(1));
+        self.write_command(&mut cmd)?;
+
+        cmd.result()
+    }
+
+    pub fn unpair_device(
+        &self,
+        ctrl_index: u16,
+        address: &address::Address,
+    ) -> Result<address::Address, Error> {
+        let mut cmd = UnpairDeviceCommand::new(ctrl_index, &address, time::Duration::from_secs(1));
+        self.write_command(&mut cmd)?;
+
+        cmd.result()
+    }
+
+    pub fn get_supported_cmds(&self) -> Result<SupportedCmdsResult, Error> {
+        let mut cmd = GetSupportedCmdsCommand::new(time::Duration::from_secs(1));
+        self.write_command(&mut cmd)?;
+
+        cmd.result()
+    }
+
+    pub fn set_scan_params(
+        &self,
+        ctrl_index: u16,
+        interval: u16,
+        window: u16,
+    ) -> Result<u8, Error> {
+        let mut cmd =
+            SetScanParamsCommand::new(ctrl_index, interval, window, time::Duration::from_secs(1));
+        self.write_command(&mut cmd)?;
+
+        cmd.result()
+    }
+
     fn write_command(&self, cmd: &mut Command) -> Result<(), Error> {
         let mut fds = vec![libc::pollfd {
             fd: self.fd,
@@ -119,11 +190,7 @@ impl BTMgmt {
 
         unsafe {
             let cmd_ptr = Box::into_raw(cmd.to_bytes().into_boxed_slice());
-            libc::write(
-                self.fd,
-                cmd_ptr as *mut libc::c_void,
-                cmd.size(),
-            );
+            libc::write(self.fd, cmd_ptr as *mut libc::c_void, cmd.size());
             Box::from_raw(cmd_ptr)
         };
 
@@ -178,7 +245,6 @@ impl Drop for BTMgmt {
     }
 }
 
-
 pub struct BTMgmtEventListener {
     pub fd: i32,
     running: Arc<AtomicBool>,
@@ -189,7 +255,6 @@ impl BTMgmtEventListener {
     pub fn new(
         event_tx: mpsc::SyncSender<Box<BtmgmtEventPacketStructure>>,
     ) -> Result<BTMgmtEventListener, Error> {
-        
         let mut btmgmteventlistener = BTMgmtEventListener {
             fd: unsafe {
                 libc::socket(
@@ -199,7 +264,7 @@ impl BTMgmtEventListener {
                 )
             },
             running: Arc::new(AtomicBool::new(false)),
-            handle: None,  
+            handle: None,
         };
 
         if btmgmteventlistener.fd < 0 {
@@ -230,7 +295,6 @@ impl BTMgmtEventListener {
         Ok(btmgmteventlistener)
     }
 
-
     fn run(&mut self, event_tx: mpsc::SyncSender<Box<BtmgmtEventPacketStructure>>) {
         let mut fds = vec![libc::pollfd {
             fd: self.fd,
@@ -251,28 +315,29 @@ impl BTMgmtEventListener {
                         let bytes = unsafe {
                             libc::read(fd, buffer.as_mut_ptr() as *mut libc::c_void, 128)
                         };
-                        
+
                         if bytes as usize == mem::size_of::<BtmgmtEventPacketStructure>() {
-                            
-                            let mut address: [u8; 6] = Default::default(); 
+                            let mut address: [u8; 6] = Default::default();
                             address.copy_from_slice(&buffer[6..12]);
 
                             let btmgmtstr = BtmgmtEventPacketStructure {
-                                event_code:          u16::from(buffer[0]) | u16::from(buffer[1]) << 8,
-                                controller_index:    u16::from(buffer[2]) | u16::from(buffer[3]) << 8,
-                                param_lenght:        u16::from(buffer[4]) | u16::from(buffer[5]) << 8,
-                                device_address:      address::Address::from_bytes(address, buffer[12]),
-                                disconnect_reason:   buffer[13],
+                                event_code: u16::from(buffer[0]) | u16::from(buffer[1]) << 8,
+                                controller_index: u16::from(buffer[2]) | u16::from(buffer[3]) << 8,
+                                param_lenght: u16::from(buffer[4]) | u16::from(buffer[5]) << 8,
+                                device_address: address::Address::from_bytes(address, buffer[12]),
+                                disconnect_reason: buffer[13],
                             };
 
-                            if btmgmtstr.event_code == BTMGMT_EVENT_CODE_DEVICE_DISCONNECTED && 
-                                btmgmtstr.disconnect_reason == BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_AUTH_FAILURE {
-                                    let event_data = Box::new(btmgmtstr);
-                                    match event_tx.send(event_data) {
-                                        Ok(()) => {}
-                                        Err(_err) => return,                                    
-                                    }                                    
-                            }                                
+                            if btmgmtstr.event_code == BTMGMT_EVENT_CODE_DEVICE_DISCONNECTED
+                                && btmgmtstr.disconnect_reason
+                                    == BTMGMT_EVENT_DEVICE_DISCONNECTED_REASON_AUTH_FAILURE
+                            {
+                                let event_data = Box::new(btmgmtstr);
+                                match event_tx.send(event_data) {
+                                    Ok(()) => {}
+                                    Err(_err) => return,
+                                }
+                            }
                         }
                     }
                 }
@@ -282,7 +347,6 @@ impl BTMgmtEventListener {
         self.handle = Some(handle);
     }
 }
-
 
 impl Drop for BTMgmtEventListener {
     fn drop(&mut self) {
